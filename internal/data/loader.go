@@ -67,9 +67,18 @@ func SortIssues(issues []Issue) {
 	})
 }
 
-// GroupByParade groups issues into parade sections.
+// GroupByParade groups issues into parade sections, resolving dependencies
+// against the same issues. Use GroupByParadeWith when issues is a filtered
+// subset: a blocker left out of the subset would otherwise look missing, and
+// a missing blocker counts as blocking.
 func GroupByParade(issues []Issue, blockingTypes map[string]bool) map[ParadeStatus][]Issue {
-	issueMap := BuildIssueMap(issues)
+	return GroupByParadeWith(issues, BuildIssueMap(issues), blockingTypes)
+}
+
+// GroupByParadeWith groups issues into parade sections, resolving their
+// dependencies against issueMap, which should hold every loaded issue
+// (closed ones included) even when issues is a filtered subset.
+func GroupByParadeWith(issues []Issue, issueMap map[string]*Issue, blockingTypes map[string]bool) map[ParadeStatus][]Issue {
 	groups := map[ParadeStatus][]Issue{
 		ParadeRolling:      {},
 		ParadeLinedUp:      {},

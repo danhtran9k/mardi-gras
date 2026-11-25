@@ -147,7 +147,7 @@ func main() {
 
 	if *statusMode {
 		visible := data.ExcludeByLabel(data.ExcludeByType(issues, excludeTypes), excludeLabels)
-		groups := data.GroupByParade(visible, blockingTypes)
+		groups := data.GroupByParadeWith(visible, data.BuildIssueMap(issues), blockingTypes)
 		fmt.Print(tmux.StatusLine(groups))
 		return
 	}

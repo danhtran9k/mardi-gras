@@ -310,7 +310,7 @@ func NewWithGuard(issues []data.Issue, source data.Source, blockingTypes map[str
 	if len(filters) > 0 {
 		f = filters[0]
 	}
-	groups := data.GroupByParade(data.ExcludeByLabel(data.ExcludeByType(issues, f.ExcludeTypes), f.ExcludeLabels), blockingTypes)
+	groups := data.GroupByParadeWith(data.ExcludeByLabel(data.ExcludeByType(issues, f.ExcludeTypes), f.ExcludeLabels), data.BuildIssueMap(issues), blockingTypes)
 
 	watchPath := source.Path
 	pathExplicit := source.Explicit
@@ -3616,10 +3616,11 @@ func (m *Model) rebuildParade() {
 	}
 	groups := m.groups
 	detailIssueMap := data.BuildIssueMap(m.issues)
-	paradeIssueMap := detailIssueMap
 	if m.filterInput.Value() != "" || m.focusMode || len(m.excludeTypes) > 0 || len(m.excludeLabels) > 0 {
-		groups = data.GroupByParade(filteredIssues, m.blockingTypes)
-		paradeIssueMap = data.BuildIssueMap(filteredIssues)
+		// Group only what is shown, but resolve dependencies against every
+		// loaded issue: focus mode drops closed issues and a filter drops
+		// non-matches, and a blocker missing from the subset counts as open.
+		groups = data.GroupByParadeWith(filteredIssues, detailIssueMap, m.blockingTypes)
 	}
 
 	m.header = components.Header{
@@ -3633,7 +3634,7 @@ func (m *Model) rebuildParade() {
 		CurrentIssueID:   m.currentIssueID,
 	}
 
-	m.parade = views.NewParadeWithData(filteredIssues, groups, paradeIssueMap, paradeW, bodyH, m.blockingTypes)
+	m.parade = views.NewParadeWithData(filteredIssues, groups, detailIssueMap, paradeW, bodyH, m.blockingTypes)
 	m.parade.MatchHighlights = highlights
 	m.parade.Ranks = ranks
 	// Folds outlive the rebuild; a filter or focus mode suspends them so no
