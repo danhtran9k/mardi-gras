@@ -412,13 +412,17 @@ Initial load based on source.Mode:
     |
     v
 --status mode?
-  yes --> data.GroupByParade() --> tmux.StatusLine() --> print and exit
+  yes --> data.GroupByParadeWith() --> tmux.StatusLine() --> print and exit
   no  --> app.New(issues, source, ...) --> tea.NewProgram(model).Run()
 ```
 
 ### 2. Parade grouping (data/loader.go)
 
-`GroupByParade` builds an issue lookup map, then classifies each issue:
+`GroupByParadeWith(issues, issueMap, blockingTypes)` classifies each issue, resolving dependencies against `issueMap`. `GroupByParade` is the shorthand that builds the map from `issues` itself.
+
+When `issues` is a filtered subset (focus mode, the filter, `--exclude-type` / `--exclude-label`, `--status`), the map must still hold **every loaded issue**, closed ones included. A blocker left out of the map counts as missing, and a missing blocker counts as blocking, so a closed blocker hidden by the view would wrongly stall the issues it no longer blocks.
+
+Each issue is classified with:
 
 ```
 issue.ParadeGroup(issueMap, blockingTypes):
